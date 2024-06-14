@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/time.h> 
 #include "arvores.h"
 
 //FUNÇÕES DA ÁRVORE AVL
+
+int rotacoesAVL = 0;
+int rotacoesRB = 0;
 
 typedef struct noavl{
     int chave;
@@ -19,7 +24,7 @@ typedef struct avl{
 } avl;
 
 
-avl *criaArvore(){
+avl *criaArvoreAvl(){
     avl *novaArvore = (avl *)malloc(sizeof(avl));
     if (novaArvore == NULL) exit(1);
     novaArvore->sentinela = (noavl *)malloc(sizeof(noavl));
@@ -240,6 +245,7 @@ void balanceamento(avl *arv, noavl *noDesbalanceado){
 }
 
 void rotacaoDirAvl(noavl *noDesbal){
+    rotacoesAVL++;
     noavl *x = noDesbal->Fesq;
     noDesbal->Fesq = x->Fdir;
     if (x->Fdir != NULL){
@@ -256,6 +262,7 @@ void rotacaoDirAvl(noavl *noDesbal){
 }
 
 void rotacaoEsqAvl(noavl *noDesbal){
+    rotacoesAVL++;
     noavl *y = noDesbal->Fdir;
     noDesbal->Fdir = y->Fesq;
     if (y->Fesq != NULL){
@@ -359,7 +366,7 @@ int insereNoRB(rb *arv, int valor) {
     }
 
     arv->numElementos++;
-    balanceamentoInsercao(arv, novoNo);
+    balanceamentoInsercaoRB(arv, novoNo);
 
     return 1;
 }
@@ -401,7 +408,7 @@ int removeNoRB(rb *arv, int valor) {
         }else{
             noRemover->cor = filho->cor;
         }
-        balanceamentoRemocao(arv, noRemover, noRemover->pai, valor);
+        balanceamentoRemocaoRB(arv, noRemover, noRemover->pai, valor);
     }
 
     if (noRemover->pai == NULL) {
@@ -562,6 +569,7 @@ void balanceamentoRemocaoRB(rb *arv, norb *noDesbal, norb *pai, int valor) {
 }
 
 void rotacaoDirRB(rb *arv, norb *noDesbal) {
+    rotacoesRB++;
     norb *x = noDesbal->esq;
     noDesbal->esq = x->dir;
 
@@ -584,6 +592,7 @@ void rotacaoDirRB(rb *arv, norb *noDesbal) {
 }
 
 void rotacaoEsqRB(rb *arv, norb *noDesbal) {
+    rotacoesRB++;
     norb *y = noDesbal->dir;
     noDesbal->dir = y->esq;
 
@@ -603,4 +612,140 @@ void rotacaoEsqRB(rb *arv, norb *noDesbal) {
 
     y->esq = noDesbal;
     noDesbal->pai = y;
+}
+
+noavl* buscaAVL(noavl* raiz, int chave) {
+    if (raiz == NULL || raiz->chave == chave)
+        return raiz;
+
+    if (chave < raiz->chave)
+        return buscaAVL(raiz->Fesq, chave);
+    else
+        return buscaAVL(raiz->Fdir, chave);
+}
+
+norb* buscaRB(norb* raiz, int chave) {
+    norb* atual = raiz;
+
+    while (atual != NULL && atual->chave != chave) {
+        if (chave < atual->chave)
+            atual = atual->esq;
+        else
+            atual = atual->dir;
+    }
+
+    return atual;
+}
+
+
+void benchmark_avl(int num_elements) {
+    FILE *arq;
+	arq = fopen("resultadosAVL.txt", "a");
+    avl *arvore_avl = criaArvoreAvl();
+
+    double start_time, end_time, total_time;
+
+    // Inserção na Árvore avl
+    clock_t start = clock();
+    for (int i = 0; i < num_elements; i++) {
+        insereNoAvl(arvore_avl, i);
+    }
+    clock_t end = clock();
+	double tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    printf("Imprimendo em ordem\n");
+    imprimePreOrdemAvl(getRaizAvl(arvore_avl));
+    printf("\n Num elementos: %d\n",getNumElementosAvl(arvore_avl));
+    fprintf(arq, "Inserção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesAVL, tempo);
+    
+
+    // Busca na Árvore AVL
+    start = clock();
+    for (int i = 0; i < 1000; i++) {
+        int num=rand() % num_elements;
+        buscaAVL(arvore_avl->sentinela, num);
+    }
+    end = clock();		
+
+	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+
+    fprintf(arq, "Busca de 1000 elementos aleatórios: %f milissegundos\n", tempo);
+
+
+    rotacoesAVL = 0;
+
+    // Remoção na Árvore Avl
+    start = clock();
+    for (int i = 0; i < num_elements; i++) {
+        removeNoAvl(arvore_avl, i);
+    }
+    end = clock();		
+
+	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    printf("\n------------------------------\n");
+    
+    printf("Imprimendo em ordem\n");
+    imprimePreOrdemAvl(getRaizAvl(arvore_avl));
+    printf("\n Num elementos: %d\n",getNumElementosAvl(arvore_avl));
+    fprintf(arq, "Remoção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesAVL, tempo);
+
+    
+
+    fclose(arq);
+    free(arvore_avl);
+}
+
+void benchmark_rb(int num_elements) {
+    FILE *arq;
+	arq = fopen("resultadosRB.txt", "a");
+    rb *arvore_rb = criaArvoreRB();
+
+    double start_time, end_time, total_time;
+
+    // Inserção na Árvore RB
+    clock_t start = clock();
+    for (int i = 0; i < num_elements; i++) {
+        insereNoRB(arvore_rb, i);
+    }
+    clock_t end = clock();
+	double tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    printf("Imprimendo em ordem\n");
+    imprimePreOrdemRB(arvore_rb,getRaizRB(arvore_rb));
+    printf("Num de elementos: %d\n",getNumElementosRB(arvore_rb));
+    fprintf(arq, "Inserção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesRB, tempo);
+    
+    // Busca na Árvore RB
+    start = clock();
+    for (int i = 0; i < 1000; i++) {
+        int num=rand() % num_elements;
+        buscaRB(arvore_rb->raiz, num);
+    }
+    end = clock();		
+
+	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+
+    fprintf(arq, "Busca de 1000 elementos aleatórios: %f milissegundos\n", tempo);
+    
+    rotacoesRB = 0;
+
+    // Remoção na Árvore RB
+    start = clock();
+    for (int i = 0; i < num_elements; i++) {
+        removeNoRB(arvore_rb, i);
+    }
+    end = clock();		
+
+	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+
+    printf("\n------------------------------\n");
+    
+    printf("Imprimendo em ordem\n");
+    imprimePreOrdemRB(arvore_rb,getRaizRB(arvore_rb));
+    printf("Num de elementos: %d\n",getNumElementosRB(arvore_rb));
+    fprintf(arq, "Remoção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesRB, tempo);
+
+
+
+
+    fclose(arq);
+    free(arvore_rb);
 }

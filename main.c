@@ -4,5 +4,7 @@
 
 
 int main (void){
-    
+    benchmark_avl(10000);
+    printf("\n");
+    benchmark_rb(10000);
 }

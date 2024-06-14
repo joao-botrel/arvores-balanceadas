@@ -31,6 +31,9 @@ noavl *getRaizAvl(avl *arv);
 //Função que retorna a quantidade de elementos da árvore
 int getNumElementosAvl(avl *arv);
 
+//Função que retorna o elemento buscado
+noavl* buscaAVL(noavl* raiz, int chave);
+
 /***********FUNÇÕES DE BALANCEAMENTO DA AVL**************/
 
 //Função que verifica o desbalanceamento na inserção
@@ -80,6 +83,9 @@ norb *getRaizRB(rb *arv);
 //Função que retorna a quantidade de elementos da árvore
 int getNumElementosRB(rb *arv);
 
+//Função que retorna o elemento buscado
+norb* buscaRB(norb* raiz, int chave);
+
 /***********FUNÇÕES DE BALANCEAMENTO DA RUBRO NEGRA**************/
 
 //Função que verifica o desbalanceamento na inserção
@@ -94,3 +100,11 @@ void rotacaoDirRB(rb *arv, norb *noDesbal);
 //Função que implementa a rotação à esquerda
 void rotacaoEsqRB(rb *arv, norb *noDesbal);
 
+// Funções para medir tempo
+double get_time();
+
+//benchmark avl
+void benchmark_avl(int num_elements);
+
+//benchmark rb
+void benchmark_rb(int num_elements);
