@@ -124,7 +124,7 @@ int removeNoAvl(avl *arv, int valor){
         }else{
             pai->Fdir = sucessor->Fdir;
             if (sucessor->Fdir != NULL) sucessor->Fdir->pai = atual;
-            
+
         }
 
         atualizaFB_remocao(arv, sucessor->pai, sucessor->chave);
@@ -174,7 +174,7 @@ void atualizaFB_insercao(avl *arv, noavl *novoNo){
         aux = aux->pai;
     } while ((aux->fb != 0) && (aux->fb != 2) && (aux->fb != -2) && (aux->pai != arv->sentinela));
     if ((aux->fb == 2) || (aux->fb == -2)) balanceamento(arv, aux);
-    
+
 }
 
 void balanceamento(avl *arv, noavl *noDesbalanceado){
@@ -324,56 +324,40 @@ rb *criaArvoreRB() {
 int insereNoRB(rb *arv, int valor) {
     if (arv == NULL)
         return 0;
+    
+    norb *novo_no = (norb*)malloc(sizeof(norb));
+    novo_no->chave = valor;
+    novo_no->cor = 'R';
+    novo_no->esq = novo_no->dir = novo_no->pai = NULL;
+    norb *y = NULL;
+    norb *x = arv->raiz;
 
-    norb *novoNo = (norb *) malloc(sizeof(norb));
-    if (novoNo == NULL)
-        return 0;
-
-    novoNo->chave = valor;
-    novoNo->esq = NULL;
-    novoNo->dir = NULL;
-    novoNo->pai = NULL;
-    novoNo->cor = 'R';
-
-    if (arv->raiz == NULL) {
-        novoNo->cor = 'B';
-        arv->raiz = novoNo;
-        arv->numElementos++;
-        return 1;
-    }
-
-    norb *atual = arv->raiz;
-    norb *ant = NULL;
-
-    while (atual != NULL) {
-        ant = atual;
-
-        if (valor == atual->chave) {
-            free(novoNo);
-            return 0; 
-        } else if (valor < atual->chave) {
-            atual = atual->esq;
+    while (x != NULL) {
+        y = x;
+        if (novo_no->chave < x->chave) {
+            x = x->esq;
         } else {
-            atual = atual->dir;
+            x = x->dir;
         }
     }
 
-    novoNo->pai = ant;
-    if (valor < ant->chave) {
-        ant->esq = novoNo;
+    novo_no->pai = y;
+    if (y == NULL) {
+        arv->raiz = novo_no;
+    } else if (novo_no->chave < y->chave) {
+        y->esq = novo_no;
     } else {
-        ant->dir = novoNo;
+        y->dir = novo_no;
     }
 
     arv->numElementos++;
-    balanceamentoInsercaoRB(arv, novoNo);
+    balanceamentoInsercaoRB(arv, novo_no);
 
     return 1;
 }
 
 
 int removeNoRB(rb *arv, int valor) {
-    char c;
     if (arv == NULL || arv->raiz == NULL)
         return 0;
 
@@ -388,6 +372,7 @@ int removeNoRB(rb *arv, int valor) {
     if (noRemover == NULL)
         return -1;
 
+    char cor = noRemover->cor;
     if (noRemover->esq != NULL && noRemover->dir != NULL) {
         norb *sucessor = noRemover->dir;
         while (sucessor->esq != NULL)
@@ -397,38 +382,38 @@ int removeNoRB(rb *arv, int valor) {
         noRemover = sucessor;
     }
 
-    norb *filho = NULL;
-    if (noRemover->esq != NULL)
-        filho = noRemover->esq;
-    else
-        filho = noRemover->dir;
-    if (noRemover->cor == 'B') {
-        if (filho==NULL){
-            noRemover->cor = 'B';
-        }else{
-            noRemover->cor = filho->cor;
-        }
-        balanceamentoRemocaoRB(arv, noRemover, noRemover->pai, valor);
+    norb *filho = (noRemover->esq != NULL) ? noRemover->esq : noRemover->dir;
+
+    if (filho != NULL) {
+        filho->pai = noRemover->pai;
     }
 
     if (noRemover->pai == NULL) {
         arv->raiz = filho;
-        if (filho != NULL)
-            filho->pai = NULL;
     } else {
         if (noRemover == noRemover->pai->esq)
             noRemover->pai->esq = filho;
         else
             noRemover->pai->dir = filho;
+    }
 
-        if (filho != NULL)
-            filho->pai = noRemover->pai;
+    if (noRemover->cor == 'B') {
+        if (filho != NULL && filho->cor == 'R') {
+            filho->cor = 'B';
+        } else {
+            balanceamentoRemocaoRB(arv, filho, noRemover->pai, valor);
+        }
+    }
+
+    if (cor == 'B'){
+        balanceamentoRemocaoRB(arv, filho, noRemover->pai, valor);
     }
 
     free(noRemover);
     arv->numElementos--;
     return 1;
 }
+
 
 void imprimeOrdemRB(norb *raiz) {
     if (raiz == NULL) return;
@@ -455,47 +440,42 @@ int getNumElementosRB(rb *arv) {
     return arv->numElementos;
 }
 
-void balanceamentoInsercaoRB(rb *arv, norb *noDesbal) {
-    while (noDesbal->pai != NULL && noDesbal->pai->cor == 'R') {
-        if (noDesbal->pai == noDesbal->pai->pai->esq) {
-            norb *tio = noDesbal->pai->pai->dir;
-
+void balanceamentoInsercaoRB(rb *arv, norb *z) {
+    while (z->pai != NULL && z->pai->cor == 'R') {
+        if (z->pai == z->pai->pai->esq) {
+            norb *tio = z->pai->pai->dir;
             if (tio != NULL && tio->cor == 'R') {
-                noDesbal->pai->cor = 'B';
+                z->pai->cor = 'B';
                 tio->cor = 'B';
-                noDesbal->pai->pai->cor = 'R';
-                noDesbal = noDesbal->pai->pai;
+                z->pai->pai->cor = 'R';
+                z = z->pai->pai;
             } else {
-                if (noDesbal == noDesbal->pai->dir) {
-                    noDesbal = noDesbal->pai;
-                    rotacaoEsqRB(arv, noDesbal);
+                if (z == z->pai->dir) {
+                    z = z->pai;
+                    rotacaoEsqRB(arv, z);
                 }
-
-                noDesbal->pai->cor = 'B';
-                noDesbal->pai->pai->cor = 'R';
-                rotacaoDirRB(arv, noDesbal->pai->pai);
+                z->pai->cor = 'B';
+                z->pai->pai->cor = 'R';
+                rotacaoDirRB(arv, z->pai->pai);
             }
         } else {
-            norb *tio = noDesbal->pai->pai->esq;
-
+            norb *tio = z->pai->pai->esq;
             if (tio != NULL && tio->cor == 'R') {
-                noDesbal->pai->cor = 'B';
+                z->pai->cor = 'B';
                 tio->cor = 'B';
-                noDesbal->pai->pai->cor = 'R';
-                noDesbal = noDesbal->pai->pai;
+                z->pai->pai->cor = 'R';
+                z = z->pai->pai;
             } else {
-                if (noDesbal == noDesbal->pai->esq) {
-                    noDesbal = noDesbal->pai;
-                    rotacaoDirRB(arv, noDesbal);
+                if (z == z->pai->esq) {
+                    z = z->pai;
+                    rotacaoDirRB(arv, z);
                 }
-
-                noDesbal->pai->cor = 'B';
-                noDesbal->pai->pai->cor = 'R';
-                rotacaoEsqRB(arv, noDesbal->pai->pai);
+                z->pai->cor = 'B';
+                z->pai->pai->cor = 'R';
+                rotacaoEsqRB(arv, z->pai->pai);
             }
         }
     }
-
     arv->raiz->cor = 'B';
 }
 
@@ -511,7 +491,7 @@ void balanceamentoRemocaoRB(rb *arv, norb *noDesbal, norb *pai, int valor) {
                 irmao = pai->dir;
             }
 
-            if (irmao == NULL || ((irmao->esq == NULL || irmao->esq->cor == 'B') && (irmao->dir == NULL || irmao->dir->cor == 'B'))) {
+            if (irmao == NULL || (irmao->esq == NULL || irmao->esq->cor == 'B') && (irmao->dir == NULL || irmao->dir->cor == 'B')) {
                 if (irmao != NULL) irmao->cor = 'R';
                 noDesbal = pai;
                 pai = noDesbal->pai;
@@ -523,12 +503,10 @@ void balanceamentoRemocaoRB(rb *arv, norb *noDesbal, norb *pai, int valor) {
                     irmao = pai->dir;
                 }
 
-                if (irmao != NULL) {
-                    irmao->cor = pai->cor;
-                    pai->cor = 'B';
-                    if (irmao->dir != NULL) irmao->dir->cor = 'B';
-                    rotacaoEsqRB(arv, pai);
-                }
+                irmao->cor = pai->cor;
+                pai->cor = 'B';
+                if (irmao->dir != NULL) irmao->dir->cor = 'B';
+                rotacaoEsqRB(arv, pai);
                 noDesbal = arv->raiz;
             }
         } else {
@@ -541,7 +519,7 @@ void balanceamentoRemocaoRB(rb *arv, norb *noDesbal, norb *pai, int valor) {
                 irmao = pai->esq;
             }
 
-            if (irmao == NULL || ((irmao->dir == NULL || irmao->dir->cor == 'B') && (irmao->esq == NULL || irmao->esq->cor == 'B'))) {
+            if (irmao == NULL || (irmao->dir == NULL || irmao->dir->cor == 'B') && (irmao->esq == NULL || irmao->esq->cor == 'B')) {
                 if (irmao != NULL) irmao->cor = 'R';
                 noDesbal = pai;
                 pai = noDesbal->pai;
@@ -553,12 +531,10 @@ void balanceamentoRemocaoRB(rb *arv, norb *noDesbal, norb *pai, int valor) {
                     irmao = pai->esq;
                 }
 
-                if (irmao != NULL) {
-                    irmao->cor = pai->cor;
-                    pai->cor = 'B';
-                    if (irmao->esq != NULL) irmao->esq->cor = 'B';
-                    rotacaoDirRB(arv, pai);
-                }
+                irmao->cor = pai->cor;
+                pai->cor = 'B';
+                if (irmao->esq != NULL) irmao->esq->cor = 'B';
+                rotacaoDirRB(arv, pai);
                 noDesbal = arv->raiz;
             }
         }
@@ -568,8 +544,10 @@ void balanceamentoRemocaoRB(rb *arv, norb *noDesbal, norb *pai, int valor) {
         noDesbal->cor = 'B';
 }
 
+
 void rotacaoDirRB(rb *arv, norb *noDesbal) {
     rotacoesRB++;
+    printf("Oiii");
     norb *x = noDesbal->esq;
     noDesbal->esq = x->dir;
 
@@ -640,7 +618,7 @@ norb* buscaRB(norb* raiz, int chave) {
 
 void benchmark_avl(int num_elements) {
     FILE *arq;
-	arq = fopen("resultadosAVL.txt", "a");
+    arq = fopen("resultadosAVL.txt", "a");
     avl *arvore_avl = criaArvoreAvl();
 
     double start_time, end_time, total_time;
@@ -651,12 +629,12 @@ void benchmark_avl(int num_elements) {
         insereNoAvl(arvore_avl, i);
     }
     clock_t end = clock();
-	double tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    double tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
     printf("Imprimendo em ordem\n");
     imprimePreOrdemAvl(getRaizAvl(arvore_avl));
     printf("\n Num elementos: %d\n",getNumElementosAvl(arvore_avl));
     fprintf(arq, "Inserção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesAVL, tempo);
-    
+
 
     // Busca na Árvore AVL
     start = clock();
@@ -666,7 +644,7 @@ void benchmark_avl(int num_elements) {
     }
     end = clock();		
 
-	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
 
     fprintf(arq, "Busca de 1000 elementos aleatórios: %f milissegundos\n", tempo);
 
@@ -680,15 +658,15 @@ void benchmark_avl(int num_elements) {
     }
     end = clock();		
 
-	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
     printf("\n------------------------------\n");
-    
+
     printf("Imprimendo em ordem\n");
     imprimePreOrdemAvl(getRaizAvl(arvore_avl));
     printf("\n Num elementos: %d\n",getNumElementosAvl(arvore_avl));
     fprintf(arq, "Remoção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesAVL, tempo);
 
-    
+
 
     fclose(arq);
     free(arvore_avl);
@@ -696,7 +674,7 @@ void benchmark_avl(int num_elements) {
 
 void benchmark_rb(int num_elements) {
     FILE *arq;
-	arq = fopen("resultadosRB.txt", "a");
+    arq = fopen("resultadosRB.txt", "a");
     rb *arvore_rb = criaArvoreRB();
 
     double start_time, end_time, total_time;
@@ -707,12 +685,12 @@ void benchmark_rb(int num_elements) {
         insereNoRB(arvore_rb, i);
     }
     clock_t end = clock();
-	double tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    double tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
     printf("Imprimendo em ordem\n");
     imprimePreOrdemRB(arvore_rb,getRaizRB(arvore_rb));
     printf("Num de elementos: %d\n",getNumElementosRB(arvore_rb));
     fprintf(arq, "Inserção de 10000 elementos ordenados: %d rotações em %f milissegundos\n", rotacoesRB, tempo);
-    
+
     // Busca na Árvore RB
     start = clock();
     for (int i = 0; i < 1000; i++) {
@@ -721,10 +699,10 @@ void benchmark_rb(int num_elements) {
     }
     end = clock();		
 
-	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
 
     fprintf(arq, "Busca de 1000 elementos aleatórios: %f milissegundos\n", tempo);
-    
+
     rotacoesRB = 0;
 
     // Remoção na Árvore RB
@@ -734,10 +712,10 @@ void benchmark_rb(int num_elements) {
     }
     end = clock();		
 
-	tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
+    tempo = ((double)(end - start)) * 1000 / CLOCKS_PER_SEC;
 
     printf("\n------------------------------\n");
-    
+
     printf("Imprimendo em ordem\n");
     imprimePreOrdemRB(arvore_rb,getRaizRB(arvore_rb));
     printf("Num de elementos: %d\n",getNumElementosRB(arvore_rb));

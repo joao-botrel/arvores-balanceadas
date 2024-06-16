@@ -108,3 +108,7 @@ void benchmark_avl(int num_elements);
 
 //benchmark rb
 void benchmark_rb(int num_elements);
+
+norb* minimoRB(norb* no);
+
+void transplantarRB(rb *arvore, norb *u, norb *v);

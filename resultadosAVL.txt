@@ -1,3 +1,3 @@
-Inserção de 10000 elementos ordenados: 9986 rotações em 2.275000 milissegundos
-Busca de 1000 elementos aleatórios: 0.143000 milissegundos
-Remoção de 10000 elementos ordenados: 5951 rotações em 0.612000 milissegundos
+Inserção de 10000 elementos ordenados: 9986 rotações em 1.357000 milissegundos
+Busca de 1000 elementos aleatórios: 0.200000 milissegundos
+Remoção de 10000 elementos ordenados: 5951 rotações em 0.765000 milissegundos
